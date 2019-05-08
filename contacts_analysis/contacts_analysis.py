@@ -285,18 +285,3 @@ OUTPUT [contacts_series, info_contacts_table] \n \
 			[8] A2_resid, 		[9] A2_resnumber, 	[10] A2_mol, 	[11] occupational_time")
 	
 	return [contacts_series, info_contact_table]
-
-
-def getContactsByRes(info_contact_table):
-	
-	restype_atm1 = [el[2] for el in info_contact_table] 
-	restype_atm2 = [el[7] for el in info_contact_table] 
-	
-	aa_list = set(restype_atm1 + restype_atm2)
-	
-	contacts_by_res = pd.DataFrame(data = 0, index = aa_list, columns = aa_list)
-	
-	for item in info_contact_table:
-		contacts_by_res.loc[item[2]][item[7]] += 1
-		
-	return contacts_by_res
