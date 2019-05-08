@@ -6,8 +6,9 @@ Requirements: numpy, MDAnalysis, panda
 
 ### List of user intended functions
 
+```
 computeContacts(universe, sel1 = "name CA", sel2 = None, cutoff = 6, lifetime = 0.5, delta_frames = 1)	
-```	
+	
 	Compute contacts within cutoff occurring between atoms within a set selected by sel1
 	or between atoms of sel1 and toms of sel2 (if given). Contacts are filtered for the
 	ones present more than a given fraction (lifetime).
@@ -42,9 +43,9 @@ computeContacts(universe, sel1 = "name CA", sel2 = None, cutoff = 6, lifetime = 
 			[8] A2_resid, 		[9] A2_resnumber, 	[10] A2_mol, 	[11] occupational_time")
 ```
 	
-
-getContactsByRes(info_contact_table)
 ```
+getContactsByRes(info_contact_table)
+
 	Given a list of contacts (as per computeContacts() output), computes the number of
 	contacts between different amino acids, breaking them by amino acid type.
 	Returns a panda data frame of size NxN, with N the different types of amino acid
