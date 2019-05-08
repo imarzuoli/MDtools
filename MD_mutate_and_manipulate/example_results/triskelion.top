@@ -1,0 +1,15 @@
+#include "gromos54a8.ff/forcefield.itp"
+#include "triskelion.itp"
+#ifdef POSRES 
+#include "posreall_triskelion.itp" 
+#endif
+
+#include "gromos54a8.ff/spc.itp"
+
+#include "gromos54a8.ff/ions.itp"
+
+[ system ]
+merged
+
+[ molecules ]
+merged       1
