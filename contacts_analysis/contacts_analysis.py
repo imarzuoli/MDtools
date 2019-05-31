@@ -22,7 +22,7 @@ from MDAnalysis.analysis.distances import contact_matrix
 #                             by residue
 
 
-def computeContacts(universe, sel1 = "name CA", sel2 = None, cutoff = 6, lifetime = 0.5, delta_frames = 1):
+def computeContacts(universe, sel1 = "name CA", sel2 = None, cutoff = 6, lifetime = 0.5, delta_frames = 1, resmol = None, collapse = True):
 	
 	"""
 	
@@ -49,6 +49,15 @@ def computeContacts(universe, sel1 = "name CA", sel2 = None, cutoff = 6, lifetim
 				analysed. Values between 0 and 1, default 0.5
 	delta_frames: int
 				Stride on the trajectory frames. Default 1 (all frames are analysed)
+	resmol      : int
+				Nr of residues in a molecule, to identify the molecule ID. Useful when
+				residues are listed sequentially, not restarting from 1 at each molecule.
+				If none, the number of residues with different ID in selection 1 is taken.
+				Molecule ID is meaningful only if the system is made of N copies of the
+				same molecule. Default None
+	collapse    : bool
+				If True, removes contacts linking the same pair of residues, keeping only
+				the first one detected
 	
 	Returns
 	------------
@@ -67,7 +76,7 @@ def computeContacts(universe, sel1 = "name CA", sel2 = None, cutoff = 6, lifetim
 		grp1 = sel1
 	
 	if (sel2 is None):
-		[contacts_series, info_contact_table] = _computeSameGroupContacts(universe, grp1, cutoff, lifetime, delta_frames)
+		[contacts_series, info_contact_table] = _computeSameGroupContacts(universe, grp1, cutoff, lifetime, delta_frames, resmol, collapse)
 		
 	else:
 		if type(sel2) is str:
@@ -77,9 +86,9 @@ def computeContacts(universe, sel1 = "name CA", sel2 = None, cutoff = 6, lifetim
 			grp2 = sel2
 			
 		if grp1 == grp2:
-			[contacts_series, info_contact_table] = _computeSameGroupContacts(universe, grp1, cutoff, lifetime, delta_frames)
+			[contacts_series, info_contact_table] = _computeSameGroupContacts(universe, grp1, cutoff, lifetime, delta_frames, resmol, collapse)
 		else:
-			[contacts_series, info_contact_table] = _computeTwoGroupsContacts(universe, grp1, grp2, cutoff, lifetime, delta_frames)
+			[contacts_series, info_contact_table] = _computeTwoGroupsContacts(universe, grp1, grp2, cutoff, lifetime, delta_frames, resmol, collapse)
 		
 	return [contacts_series, info_contact_table]
 
@@ -122,7 +131,7 @@ def getContactsByRes(info_contact_table):
 
 
 
-def _computeSameGroupContacts(universe, grp1, cutoff, lifetime, delta_frames):
+def _computeSameGroupContacts(universe, grp1, cutoff, lifetime, delta_frames, resmol, collapse):
 	
 	print("\nComputing contacts in trajectory:\n%s\nwithin group of atoms %s (%d instances), using a %f A cutoff" \
 						% (universe.trajectory.filename, list(set(grp1.names)), len(grp1.names), cutoff) )
@@ -160,15 +169,16 @@ def _computeSameGroupContacts(universe, grp1, cutoff, lifetime, delta_frames):
 	times = [ts.time for ts in universe.trajectory[::delta_frames]]
 	contacts_series = np.vstack((times, contacts_series)).transpose()
 	
-	#del distmat
-	
 	# Assign pair information
 	
 	bool_occupancy = occupancymat > lifetime
 	nr_kept = np.sum(bool_occupancy)
 	
 	info_contact_table = []
-	resinmol = max(grp1.atoms.resids)
+	if (resmol is None):
+		resinmol = max(grp1.atoms.resids)
+	else:
+		resinmol = resmol
 	
 	pair_nr = 0
 	
@@ -188,7 +198,18 @@ def _computeSameGroupContacts(universe, grp1, cutoff, lifetime, delta_frames):
 				
 				# Excluding subsequent or two residues apart in a chain
 				if ( tmp_pair[5] != tmp_pair[10] or tmp_pair[3] + 2 < tmp_pair[8] ):
-					info_contact_table.append(tmp_pair)
+					
+					# If collapse is True, checking if the contact was already inserted
+					if collapse:
+						# Check if pair already exists
+						new = 1
+						for item in info_contact_table:
+							if (tmp_pair[4] == item[4] and tmp_pair[9] == item[9]):
+								new = 0
+						if new == 1:
+							info_contact_table.append(tmp_pair)
+					else:
+						info_contact_table.append(tmp_pair)				
 	
 	sys.stdout.write("Assigning pairs information: %d/%d     \n" % (nr_kept, nr_kept) )
 	
@@ -205,7 +226,7 @@ OUTPUT [contacts_series, info_contacts_table] \n \
 
 
 
-def _computeTwoGroupsContacts(universe, grp1, grp2, cutoff, lifetime, delta_frames):
+def _computeTwoGroupsContacts(universe, grp1, grp2, cutoff, lifetime, delta_frames, resmol, collapse):
 	
 	print("\nComputing contacts in trajectory\n%s,\nbetween group of atoms %s (%d instances) and atoms %s (%d instances), using a %f A cutoff" \
 						% (universe.trajectory.filename, list(set(grp1.names)), len(grp1.names), list(set(grp2.names)), len(grp2.names), cutoff) )
@@ -251,7 +272,10 @@ def _computeTwoGroupsContacts(universe, grp1, grp2, cutoff, lifetime, delta_fram
 	nr_kept = np.sum(bool_occupancy)
 	
 	info_contact_table = []
-	resinmol = max(total.atoms.resids)
+	if (resmol is None):
+		resinmol = max(total.atoms.resids)
+	else:
+		resinmol = resmol
 	
 	pair_nr = 0
 	
@@ -271,7 +295,18 @@ def _computeTwoGroupsContacts(universe, grp1, grp2, cutoff, lifetime, delta_fram
 				
 				# Excluding subsequent residues in a chain
 				if ( tmp_pair[5] != tmp_pair[10] or tmp_pair[3] + 2 < tmp_pair[8] ):
-					info_contact_table.append(tmp_pair)
+					
+					# If collapse is True, checking if the contact was already inserted
+					if collapse:
+						# Check if pair already exists
+						new = 1
+						for item in info_contact_table:
+							if (tmp_pair[4] == item[4] and tmp_pair[9] == item[9]):
+								new = 0
+						if new == 1:
+							info_contact_table.append(tmp_pair)
+					else:
+						info_contact_table.append(tmp_pair)
 	
 	sys.stdout.write("Assigning pairs information: %d/%d     \n" % (nr_kept, nr_kept) )
 	
