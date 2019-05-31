@@ -7,7 +7,7 @@ Requirements: numpy, MDAnalysis, panda
 ### List of user intended functions
 
 ```
-computeContacts(universe, sel1 = "name CA", sel2 = None, cutoff = 6, lifetime = 0.5, delta_frames = 1)	
+computeContacts(universe, sel1 = "name CA", sel2 = None, cutoff = 6, lifetime = 0.5, delta_frames = 1, resmol = None, collapse = True)	
 	
 	Compute contacts within cutoff occurring between atoms within a set selected by sel1
 	or between atoms of sel1 and toms of sel2 (if given). Contacts are filtered for the
@@ -32,7 +32,16 @@ computeContacts(universe, sel1 = "name CA", sel2 = None, cutoff = 6, lifetime = 
 				analysed. Values between 0 and 1, default 0.5
 	delta_frames: int
 				Stride on the trajectory frames. Default 1 (all frames are analysed)
-	
+	resmol      : int
+				Nr of residues in a molecule, to identify the molecule ID. Useful when
+				residues are listed sequentially, not restarting from 1 at each molecule.
+				If none, the number of residues with different ID in selection 1 is taken.
+				Molecule ID is meaningful only if the system is made of N copies of the
+				same molecule. Default None
+	collapse    : bool
+				If True, removes contacts linking the same pair of residues, keeping only
+				the first one detected
+
 	Returns
 	------------
 	list [np.array, shape (n_frames_analysed,2) with time and number of contacts,

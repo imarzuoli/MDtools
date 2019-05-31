@@ -34,6 +34,8 @@ It takes care of:
 The default run calls input/RKGB_NH3ter.top and input/RRWTWE.top and produces
 a arm_mutations folder (as in the example_results folder).
 
+-----------------------------------------------------------------------------------
+
 ```example_mutate_peptide.py```
 
 [Backend pymol]
@@ -41,6 +43,7 @@ a arm_mutations folder (as in the example_results folder).
 Given a list with the mutations proposed for each amino acids in the sequence,
 creates all the possible combinations of sequence from these mutations and
 generated the pd. files.
+
 !!! At present, no search for the best rotamer is implemented !!!
 
 The default run calls input/RRWTWE_original.pdb and produces
@@ -48,4 +51,4 @@ triskelion.itp and triskelion.top (as in the example_results folder).
 
 -----------------------------------------------------------------------------------
 
-## For details of the functions of each section, see the md files in the MDmutate folder.
+## For details on the functions of each section, see the md files in the MDmutate folder.
